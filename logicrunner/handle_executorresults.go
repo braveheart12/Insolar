@@ -20,10 +20,11 @@ import (
 	"context"
 
 	watermillMsg "github.com/ThreeDotsLabs/watermill/message"
-	"github.com/insolar/insolar/insolar"
-	"github.com/insolar/insolar/insolar/payload"
 	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
+
+	"github.com/insolar/insolar/insolar"
+	"github.com/insolar/insolar/insolar/payload"
 
 	"github.com/insolar/insolar/insolar/bus"
 	"github.com/insolar/insolar/insolar/flow"
@@ -55,22 +56,22 @@ func (p *initializeExecutionState) Proceed(ctx context.Context) error {
 	p.Result.clarifyPending = false
 
 	es.Lock()
-	if es.pending == message.InPending {
+	if es.pending == insolar.InPending {
 		if !broker.currentList.Empty() {
 			logger.Debug("execution returned to node that is still executing pending")
 
-			es.pending = message.NotPending
+			es.pending = insolar.NotPending
 			es.PendingConfirmed = false
-		} else if p.msg.Pending == message.NotPending {
+		} else if p.msg.Pending == insolar.NotPending {
 			logger.Debug("executor we came to thinks that execution pending, but previous said to continue")
 
-			es.pending = message.NotPending
+			es.pending = insolar.NotPending
 		}
-	} else if es.pending == message.PendingUnknown {
+	} else if es.pending == insolar.PendingUnknown {
 		es.pending = p.msg.Pending
 		logger.Debug("pending state was unknown, setting from previous executor to ", es.pending)
 
-		if es.pending == message.PendingUnknown {
+		if es.pending == insolar.PendingUnknown {
 			p.Result.clarifyPending = true
 		}
 	}

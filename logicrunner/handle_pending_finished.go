@@ -19,6 +19,8 @@ package logicrunner
 import (
 	"context"
 
+	"github.com/pkg/errors"
+
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/insolar/bus"
 	"github.com/insolar/insolar/insolar/flow"
@@ -26,7 +28,6 @@ import (
 	"github.com/insolar/insolar/insolar/payload"
 	"github.com/insolar/insolar/insolar/reply"
 	"github.com/insolar/insolar/instrumentation/inslogger"
-	"github.com/pkg/errors"
 )
 
 type HandlePendingFinished struct {
@@ -48,7 +49,7 @@ func (h *HandlePendingFinished) Present(ctx context.Context, f flow.Flow) error 
 	broker := lr.StateStorage.UpsertExecutionState(*ref)
 
 	broker.executionState.Lock()
-	broker.executionState.pending = message.NotPending
+	broker.executionState.pending = insolar.NotPending
 	if !broker.currentList.Empty() {
 		broker.executionState.Unlock()
 		return errors.New("[ HandlePendingFinished ] received PendingFinished when we are already executing")
