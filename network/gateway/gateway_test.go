@@ -151,7 +151,7 @@ func TestDumbComplete_GetCert(t *testing.T) {
 
 	cref := testutils.RandomRef()
 
-	CR.SendRequestFunc = func(ctx context.Context, ref *insolar.Reference, method string, argsIn []interface{},
+	CR.SendRequestFunc = func(ctx context.Context, ref *insolar.Reference, method string, argsIn []interface{}, se *error,
 	) (r insolar.Reply, r1 error) {
 		require.Equal(t, &cref, ref)
 		require.Equal(t, "GetNodeInfo", method)

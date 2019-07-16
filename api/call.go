@@ -97,12 +97,14 @@ func (ar *Runner) makeCall(ctx context.Context, request requester.Request, rawBo
 		return nil, errors.Wrap(err, "[ makeCall ] failed to marshal arguments")
 	}
 
+	var systemError error
 	res, err := ar.ContractRequester.SendRequestWithPulse(
 		ctx,
 		reference,
 		"Call",
 		[]interface{}{requestArgs},
 		seedPulse,
+		&systemError,
 	)
 
 	if err != nil {
@@ -228,6 +230,7 @@ func (ar *Runner) callHandler() func(http.ResponseWriter, *http.Request) {
 		}()
 		select {
 
+		// TODO AALEKSEEV looks like a place to fix...
 		case <-ch:
 			if err != nil {
 				processError(err, err.Error(), contractAnswer, insLog, traceID)

@@ -224,7 +224,7 @@ func (m *executionProxyImplementation) RouteCall(
 
 	// Step 2. Actually make a call.
 	callMsg := &message.CallMethod{IncomingRequest: *incoming}
-	res, err := m.cr.CallMethod(ctx, callMsg)
+	res, err := m.cr.CallMethod(ctx, callMsg, &current.SystemError)
 	if err == nil && req.Wait {
 		rep.Result = res.(*reply.CallMethod).Result
 	}
@@ -257,7 +257,7 @@ func (m *executionProxyImplementation) SaveAsChild(
 
 	// Send the request
 	msg := &message.CallMethod{IncomingRequest: *incoming}
-	ref, err := m.cr.CallConstructor(ctx, msg)
+	ref, err := m.cr.CallConstructor(ctx, msg, &current.SystemError)
 	current.AddOutgoingRequest(ctx, *incoming, nil, ref, err)
 	if err != nil {
 		return err
@@ -288,7 +288,7 @@ func (m *executionProxyImplementation) SaveAsDelegate(
 	}
 
 	msg := &message.CallMethod{IncomingRequest: *incoming}
-	ref, err := m.cr.CallConstructor(ctx, msg)
+	ref, err := m.cr.CallConstructor(ctx, msg, &current.SystemError)
 	if err != nil {
 		return err
 	}

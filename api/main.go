@@ -192,7 +192,9 @@ func (ar *Runner) getMemberPubKey(ctx context.Context, ref string) (crypto.Publi
 	if err != nil {
 		return nil, errors.Wrap(err, "[ getMemberPubKey ] Can't parse ref")
 	}
-	res, err := ar.ContractRequester.SendRequest(ctx, reference, "GetPublicKey", []interface{}{})
+
+	var systemError error // AALEKSEEV TODO ???
+	res, err := ar.ContractRequester.SendRequest(ctx, reference, "GetPublicKey", []interface{}{}, &systemError)
 	if err != nil {
 		return nil, errors.Wrap(err, "[ getMemberPubKey ] Can't get public key")
 	}

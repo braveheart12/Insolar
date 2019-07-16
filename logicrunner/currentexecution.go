@@ -44,6 +44,13 @@ type Transcript struct {
 	Deactivate       bool
 	OutgoingRequests []OutgoingRequest
 	FromLedger       bool
+
+	// SystemError is not nil when the contract execution
+	// was canceled because of some sort of system (platform) error,
+	// e.g. a timeout during an external call. When the value is set the
+	// result of current execution should not be registered and the
+	// whole execution has to be retried.
+	SystemError error
 }
 
 func NewTranscript(

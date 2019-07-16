@@ -33,7 +33,7 @@ import (
 
 func mockContractRequesterWithError(t *testing.T) *testutils.ContractRequesterMock {
 	contractRequesterMock := testutils.NewContractRequesterMock(t)
-	contractRequesterMock.SendRequestFunc = func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}) (r insolar.Reply, r1 error) {
+	contractRequesterMock.SendRequestFunc = func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, se *error) (r insolar.Reply, r1 error) {
 		return nil, errors.New("test reasons")
 	}
 	return contractRequesterMock
@@ -41,7 +41,7 @@ func mockContractRequesterWithError(t *testing.T) *testutils.ContractRequesterMo
 
 func mockContractRequester(t *testing.T, res insolar.Reply) *testutils.ContractRequesterMock {
 	contractRequesterMock := testutils.NewContractRequesterMock(t)
-	contractRequesterMock.SendRequestFunc = func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}) (r insolar.Reply, r1 error) {
+	contractRequesterMock.SendRequestFunc = func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, se *error) (r insolar.Reply, r1 error) {
 		return res, nil
 	}
 	return contractRequesterMock

@@ -79,21 +79,23 @@ func randomUint64() uint64 {
 }
 
 // SendRequest makes synchronously call to method of contract by its ref without additional information
-func (cr *ContractRequester) SendRequest(ctx context.Context, ref *insolar.Reference, method string, argsIn []interface{}) (insolar.Reply, error) {
+func (cr *ContractRequester) SendRequest(ctx context.Context, ref *insolar.Reference, method string, argsIn []interface{}, systemErrror *error) (insolar.Reply, error) {
 	pulse, err := cr.PulseAccessor.Latest(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "[ ContractRequester::SendRequest ] Couldn't fetch current pulse")
+		*systemErrror = errors.Wrap(err, "[ ContractRequester::SendRequest ] Couldn't fetch current pulse")
+		return nil, *systemErrror
 	}
-	return cr.SendRequestWithPulse(ctx, ref, method, argsIn, pulse.PulseNumber)
+	return cr.SendRequestWithPulse(ctx, ref, method, argsIn, pulse.PulseNumber, systemErrror)
 }
 
-func (cr *ContractRequester) SendRequestWithPulse(ctx context.Context, ref *insolar.Reference, method string, argsIn []interface{}, pulse insolar.PulseNumber) (insolar.Reply, error) {
+func (cr *ContractRequester) SendRequestWithPulse(ctx context.Context, ref *insolar.Reference, method string, argsIn []interface{}, pulse insolar.PulseNumber, systemError *error) (insolar.Reply, error) {
 	ctx, span := instracer.StartSpan(ctx, "SendRequest "+method)
 	defer span.End()
 
 	args, err := insolar.MarshalArgs(argsIn...)
 	if err != nil {
-		return nil, errors.Wrap(err, "[ ContractRequester::SendRequest ] Can't marshal")
+		*systemError = errors.Wrap(err, "[ ContractRequester::SendRequest ] Can't marshal")
+		return nil, *systemError
 	}
 
 	msg := &message.CallMethod{
@@ -106,9 +108,10 @@ func (cr *ContractRequester) SendRequestWithPulse(ctx context.Context, ref *inso
 		},
 	}
 
-	routResult, err := cr.CallMethod(ctx, msg)
+	routResult, err := cr.CallMethod(ctx, msg, systemError)
 	if err != nil {
-		return nil, errors.Wrap(err, "[ ContractRequester::SendRequest ] Can't route call")
+		*systemError = errors.Wrap(err, "[ ContractRequester::SendRequest ] Can't route call")
+		return nil, *systemError
 	}
 
 	return routResult, nil
@@ -128,7 +131,7 @@ func (cr *ContractRequester) calcRequestHash(request record.IncomingRequest) ([i
 	return hash, nil
 }
 
-func (cr *ContractRequester) Call(ctx context.Context, inMsg insolar.Message) (insolar.Reply, error) {
+func (cr *ContractRequester) Call(ctx context.Context, inMsg insolar.Message, systemError *error) (insolar.Reply, error) {
 	ctx, span := instracer.StartSpan(ctx, "ContractRequester.Call")
 	defer span.End()
 
@@ -149,7 +152,8 @@ func (cr *ContractRequester) Call(ctx context.Context, inMsg insolar.Message) (i
 		var err error
 		reqHash, err = cr.calcRequestHash(msg.IncomingRequest)
 		if err != nil {
-			return nil, errors.Wrap(err, "[ ContractRequester::Call ] Failed to calculate hash")
+			*systemError = errors.Wrap(err, "[ ContractRequester::Call ] Failed to calculate hash")
+			return nil, *systemError
 		}
 		ch = make(chan *message.ReturnResults, 1)
 		cr.ResultMap[reqHash] = ch
@@ -165,12 +169,14 @@ func (cr *ContractRequester) Call(ctx context.Context, inMsg insolar.Message) (i
 
 	res, err := sender(ctx, msg, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't dispatch event")
+		*systemError = errors.Wrap(err, "couldn't dispatch event")
+		return nil, *systemError
 	}
 
 	r, ok := res.(*reply.RegisterRequest)
 	if !ok {
-		return nil, errors.New("Got not reply.RegisterRequest in reply for CallMethod")
+		*systemError = errors.New("Got not reply.RegisterRequest in reply for CallMethod")
+		return nil, *systemError
 	}
 
 	if async {
@@ -178,7 +184,8 @@ func (cr *ContractRequester) Call(ctx context.Context, inMsg insolar.Message) (i
 	}
 
 	if !bytes.Equal(r.Request.Record().Hash(), reqHash[:]) {
-		return nil, errors.New("Registered request has different hash")
+		*systemError = errors.New("Registered request has different hash")
+		return nil, *systemError
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, cr.callTimeout)
@@ -192,6 +199,7 @@ func (cr *ContractRequester) Call(ctx context.Context, inMsg insolar.Message) (i
 	select {
 	case ret := <-ch:
 		logger.Debug("Got results of request")
+		// TODO AALEKSEEV check SystemError
 		if ret.Error != "" {
 			return nil, errors.Wrap(errors.New(ret.Error), "CallMethod returns error")
 		}
@@ -200,23 +208,25 @@ func (cr *ContractRequester) Call(ctx context.Context, inMsg insolar.Message) (i
 		cr.ResultMutex.Lock()
 		delete(cr.ResultMap, reqHash)
 		cr.ResultMutex.Unlock()
-		return nil, errors.Errorf("request to contract was canceled: timeout of %s was exceeded", cr.callTimeout)
+		*systemError = errors.Errorf("request to contract was canceled: timeout of %s was exceeded", cr.callTimeout)
+		return nil, *systemError
 	}
 }
 
-func (cr *ContractRequester) CallMethod(ctx context.Context, inMsg insolar.Message) (insolar.Reply, error) {
-	return cr.Call(ctx, inMsg)
+func (cr *ContractRequester) CallMethod(ctx context.Context, inMsg insolar.Message, systemError *error) (insolar.Reply, error) {
+	return cr.Call(ctx, inMsg, systemError)
 }
 
-func (cr *ContractRequester) CallConstructor(ctx context.Context, inMsg insolar.Message) (*insolar.Reference, error) {
-	res, err := cr.Call(ctx, inMsg)
+func (cr *ContractRequester) CallConstructor(ctx context.Context, inMsg insolar.Message, systemError *error) (*insolar.Reference, error) {
+	res, err := cr.Call(ctx, inMsg, systemError)
 	if err != nil {
 		return nil, err
 	}
 
 	rep, ok := res.(*reply.CallConstructor)
 	if !ok {
-		return nil, errors.New("Reply is not CallConstructor")
+		*systemError = errors.New("Reply is not CallConstructor")
+		return nil, *systemError
 	}
 	return rep.Object, nil
 }

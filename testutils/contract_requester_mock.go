@@ -20,27 +20,27 @@ import (
 type ContractRequesterMock struct {
 	t minimock.Tester
 
-	CallFunc       func(p context.Context, p1 insolar.Message) (r insolar.Reply, r1 error)
+	CallFunc       func(p context.Context, p1 insolar.Message, p2 *error) (r insolar.Reply, r1 error)
 	CallCounter    uint64
 	CallPreCounter uint64
 	CallMock       mContractRequesterMockCall
 
-	CallConstructorFunc       func(p context.Context, p1 insolar.Message) (r *insolar.Reference, r1 error)
+	CallConstructorFunc       func(p context.Context, p1 insolar.Message, p2 *error) (r *insolar.Reference, r1 error)
 	CallConstructorCounter    uint64
 	CallConstructorPreCounter uint64
 	CallConstructorMock       mContractRequesterMockCallConstructor
 
-	CallMethodFunc       func(p context.Context, p1 insolar.Message) (r insolar.Reply, r1 error)
+	CallMethodFunc       func(p context.Context, p1 insolar.Message, p2 *error) (r insolar.Reply, r1 error)
 	CallMethodCounter    uint64
 	CallMethodPreCounter uint64
 	CallMethodMock       mContractRequesterMockCallMethod
 
-	SendRequestFunc       func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}) (r insolar.Reply, r1 error)
+	SendRequestFunc       func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 *error) (r insolar.Reply, r1 error)
 	SendRequestCounter    uint64
 	SendRequestPreCounter uint64
 	SendRequestMock       mContractRequesterMockSendRequest
 
-	SendRequestWithPulseFunc       func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber) (r insolar.Reply, r1 error)
+	SendRequestWithPulseFunc       func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber, p5 *error) (r insolar.Reply, r1 error)
 	SendRequestWithPulseCounter    uint64
 	SendRequestWithPulsePreCounter uint64
 	SendRequestWithPulseMock       mContractRequesterMockSendRequestWithPulse
@@ -77,6 +77,7 @@ type ContractRequesterMockCallExpectation struct {
 type ContractRequesterMockCallInput struct {
 	p  context.Context
 	p1 insolar.Message
+	p2 *error
 }
 
 type ContractRequesterMockCallResult struct {
@@ -85,14 +86,14 @@ type ContractRequesterMockCallResult struct {
 }
 
 //Expect specifies that invocation of ContractRequester.Call is expected from 1 to Infinity times
-func (m *mContractRequesterMockCall) Expect(p context.Context, p1 insolar.Message) *mContractRequesterMockCall {
+func (m *mContractRequesterMockCall) Expect(p context.Context, p1 insolar.Message, p2 *error) *mContractRequesterMockCall {
 	m.mock.CallFunc = nil
 	m.expectationSeries = nil
 
 	if m.mainExpectation == nil {
 		m.mainExpectation = &ContractRequesterMockCallExpectation{}
 	}
-	m.mainExpectation.input = &ContractRequesterMockCallInput{p, p1}
+	m.mainExpectation.input = &ContractRequesterMockCallInput{p, p1, p2}
 	return m
 }
 
@@ -109,12 +110,12 @@ func (m *mContractRequesterMockCall) Return(r insolar.Reply, r1 error) *Contract
 }
 
 //ExpectOnce specifies that invocation of ContractRequester.Call is expected once
-func (m *mContractRequesterMockCall) ExpectOnce(p context.Context, p1 insolar.Message) *ContractRequesterMockCallExpectation {
+func (m *mContractRequesterMockCall) ExpectOnce(p context.Context, p1 insolar.Message, p2 *error) *ContractRequesterMockCallExpectation {
 	m.mock.CallFunc = nil
 	m.mainExpectation = nil
 
 	expectation := &ContractRequesterMockCallExpectation{}
-	expectation.input = &ContractRequesterMockCallInput{p, p1}
+	expectation.input = &ContractRequesterMockCallInput{p, p1, p2}
 	m.expectationSeries = append(m.expectationSeries, expectation)
 	return expectation
 }
@@ -124,7 +125,7 @@ func (e *ContractRequesterMockCallExpectation) Return(r insolar.Reply, r1 error)
 }
 
 //Set uses given function f as a mock of ContractRequester.Call method
-func (m *mContractRequesterMockCall) Set(f func(p context.Context, p1 insolar.Message) (r insolar.Reply, r1 error)) *ContractRequesterMock {
+func (m *mContractRequesterMockCall) Set(f func(p context.Context, p1 insolar.Message, p2 *error) (r insolar.Reply, r1 error)) *ContractRequesterMock {
 	m.mainExpectation = nil
 	m.expectationSeries = nil
 
@@ -133,18 +134,18 @@ func (m *mContractRequesterMockCall) Set(f func(p context.Context, p1 insolar.Me
 }
 
 //Call implements github.com/insolar/insolar/insolar.ContractRequester interface
-func (m *ContractRequesterMock) Call(p context.Context, p1 insolar.Message) (r insolar.Reply, r1 error) {
+func (m *ContractRequesterMock) Call(p context.Context, p1 insolar.Message, p2 *error) (r insolar.Reply, r1 error) {
 	counter := atomic.AddUint64(&m.CallPreCounter, 1)
 	defer atomic.AddUint64(&m.CallCounter, 1)
 
 	if len(m.CallMock.expectationSeries) > 0 {
 		if counter > uint64(len(m.CallMock.expectationSeries)) {
-			m.t.Fatalf("Unexpected call to ContractRequesterMock.Call. %v %v", p, p1)
+			m.t.Fatalf("Unexpected call to ContractRequesterMock.Call. %v %v %v", p, p1, p2)
 			return
 		}
 
 		input := m.CallMock.expectationSeries[counter-1].input
-		testify_assert.Equal(m.t, *input, ContractRequesterMockCallInput{p, p1}, "ContractRequester.Call got unexpected parameters")
+		testify_assert.Equal(m.t, *input, ContractRequesterMockCallInput{p, p1, p2}, "ContractRequester.Call got unexpected parameters")
 
 		result := m.CallMock.expectationSeries[counter-1].result
 		if result == nil {
@@ -162,7 +163,7 @@ func (m *ContractRequesterMock) Call(p context.Context, p1 insolar.Message) (r i
 
 		input := m.CallMock.mainExpectation.input
 		if input != nil {
-			testify_assert.Equal(m.t, *input, ContractRequesterMockCallInput{p, p1}, "ContractRequester.Call got unexpected parameters")
+			testify_assert.Equal(m.t, *input, ContractRequesterMockCallInput{p, p1, p2}, "ContractRequester.Call got unexpected parameters")
 		}
 
 		result := m.CallMock.mainExpectation.result
@@ -177,11 +178,11 @@ func (m *ContractRequesterMock) Call(p context.Context, p1 insolar.Message) (r i
 	}
 
 	if m.CallFunc == nil {
-		m.t.Fatalf("Unexpected call to ContractRequesterMock.Call. %v %v", p, p1)
+		m.t.Fatalf("Unexpected call to ContractRequesterMock.Call. %v %v %v", p, p1, p2)
 		return
 	}
 
-	return m.CallFunc(p, p1)
+	return m.CallFunc(p, p1, p2)
 }
 
 //CallMinimockCounter returns a count of ContractRequesterMock.CallFunc invocations
@@ -228,6 +229,7 @@ type ContractRequesterMockCallConstructorExpectation struct {
 type ContractRequesterMockCallConstructorInput struct {
 	p  context.Context
 	p1 insolar.Message
+	p2 *error
 }
 
 type ContractRequesterMockCallConstructorResult struct {
@@ -236,14 +238,14 @@ type ContractRequesterMockCallConstructorResult struct {
 }
 
 //Expect specifies that invocation of ContractRequester.CallConstructor is expected from 1 to Infinity times
-func (m *mContractRequesterMockCallConstructor) Expect(p context.Context, p1 insolar.Message) *mContractRequesterMockCallConstructor {
+func (m *mContractRequesterMockCallConstructor) Expect(p context.Context, p1 insolar.Message, p2 *error) *mContractRequesterMockCallConstructor {
 	m.mock.CallConstructorFunc = nil
 	m.expectationSeries = nil
 
 	if m.mainExpectation == nil {
 		m.mainExpectation = &ContractRequesterMockCallConstructorExpectation{}
 	}
-	m.mainExpectation.input = &ContractRequesterMockCallConstructorInput{p, p1}
+	m.mainExpectation.input = &ContractRequesterMockCallConstructorInput{p, p1, p2}
 	return m
 }
 
@@ -260,12 +262,12 @@ func (m *mContractRequesterMockCallConstructor) Return(r *insolar.Reference, r1 
 }
 
 //ExpectOnce specifies that invocation of ContractRequester.CallConstructor is expected once
-func (m *mContractRequesterMockCallConstructor) ExpectOnce(p context.Context, p1 insolar.Message) *ContractRequesterMockCallConstructorExpectation {
+func (m *mContractRequesterMockCallConstructor) ExpectOnce(p context.Context, p1 insolar.Message, p2 *error) *ContractRequesterMockCallConstructorExpectation {
 	m.mock.CallConstructorFunc = nil
 	m.mainExpectation = nil
 
 	expectation := &ContractRequesterMockCallConstructorExpectation{}
-	expectation.input = &ContractRequesterMockCallConstructorInput{p, p1}
+	expectation.input = &ContractRequesterMockCallConstructorInput{p, p1, p2}
 	m.expectationSeries = append(m.expectationSeries, expectation)
 	return expectation
 }
@@ -275,7 +277,7 @@ func (e *ContractRequesterMockCallConstructorExpectation) Return(r *insolar.Refe
 }
 
 //Set uses given function f as a mock of ContractRequester.CallConstructor method
-func (m *mContractRequesterMockCallConstructor) Set(f func(p context.Context, p1 insolar.Message) (r *insolar.Reference, r1 error)) *ContractRequesterMock {
+func (m *mContractRequesterMockCallConstructor) Set(f func(p context.Context, p1 insolar.Message, p2 *error) (r *insolar.Reference, r1 error)) *ContractRequesterMock {
 	m.mainExpectation = nil
 	m.expectationSeries = nil
 
@@ -284,18 +286,18 @@ func (m *mContractRequesterMockCallConstructor) Set(f func(p context.Context, p1
 }
 
 //CallConstructor implements github.com/insolar/insolar/insolar.ContractRequester interface
-func (m *ContractRequesterMock) CallConstructor(p context.Context, p1 insolar.Message) (r *insolar.Reference, r1 error) {
+func (m *ContractRequesterMock) CallConstructor(p context.Context, p1 insolar.Message, p2 *error) (r *insolar.Reference, r1 error) {
 	counter := atomic.AddUint64(&m.CallConstructorPreCounter, 1)
 	defer atomic.AddUint64(&m.CallConstructorCounter, 1)
 
 	if len(m.CallConstructorMock.expectationSeries) > 0 {
 		if counter > uint64(len(m.CallConstructorMock.expectationSeries)) {
-			m.t.Fatalf("Unexpected call to ContractRequesterMock.CallConstructor. %v %v", p, p1)
+			m.t.Fatalf("Unexpected call to ContractRequesterMock.CallConstructor. %v %v %v", p, p1, p2)
 			return
 		}
 
 		input := m.CallConstructorMock.expectationSeries[counter-1].input
-		testify_assert.Equal(m.t, *input, ContractRequesterMockCallConstructorInput{p, p1}, "ContractRequester.CallConstructor got unexpected parameters")
+		testify_assert.Equal(m.t, *input, ContractRequesterMockCallConstructorInput{p, p1, p2}, "ContractRequester.CallConstructor got unexpected parameters")
 
 		result := m.CallConstructorMock.expectationSeries[counter-1].result
 		if result == nil {
@@ -313,7 +315,7 @@ func (m *ContractRequesterMock) CallConstructor(p context.Context, p1 insolar.Me
 
 		input := m.CallConstructorMock.mainExpectation.input
 		if input != nil {
-			testify_assert.Equal(m.t, *input, ContractRequesterMockCallConstructorInput{p, p1}, "ContractRequester.CallConstructor got unexpected parameters")
+			testify_assert.Equal(m.t, *input, ContractRequesterMockCallConstructorInput{p, p1, p2}, "ContractRequester.CallConstructor got unexpected parameters")
 		}
 
 		result := m.CallConstructorMock.mainExpectation.result
@@ -328,11 +330,11 @@ func (m *ContractRequesterMock) CallConstructor(p context.Context, p1 insolar.Me
 	}
 
 	if m.CallConstructorFunc == nil {
-		m.t.Fatalf("Unexpected call to ContractRequesterMock.CallConstructor. %v %v", p, p1)
+		m.t.Fatalf("Unexpected call to ContractRequesterMock.CallConstructor. %v %v %v", p, p1, p2)
 		return
 	}
 
-	return m.CallConstructorFunc(p, p1)
+	return m.CallConstructorFunc(p, p1, p2)
 }
 
 //CallConstructorMinimockCounter returns a count of ContractRequesterMock.CallConstructorFunc invocations
@@ -379,6 +381,7 @@ type ContractRequesterMockCallMethodExpectation struct {
 type ContractRequesterMockCallMethodInput struct {
 	p  context.Context
 	p1 insolar.Message
+	p2 *error
 }
 
 type ContractRequesterMockCallMethodResult struct {
@@ -387,14 +390,14 @@ type ContractRequesterMockCallMethodResult struct {
 }
 
 //Expect specifies that invocation of ContractRequester.CallMethod is expected from 1 to Infinity times
-func (m *mContractRequesterMockCallMethod) Expect(p context.Context, p1 insolar.Message) *mContractRequesterMockCallMethod {
+func (m *mContractRequesterMockCallMethod) Expect(p context.Context, p1 insolar.Message, p2 *error) *mContractRequesterMockCallMethod {
 	m.mock.CallMethodFunc = nil
 	m.expectationSeries = nil
 
 	if m.mainExpectation == nil {
 		m.mainExpectation = &ContractRequesterMockCallMethodExpectation{}
 	}
-	m.mainExpectation.input = &ContractRequesterMockCallMethodInput{p, p1}
+	m.mainExpectation.input = &ContractRequesterMockCallMethodInput{p, p1, p2}
 	return m
 }
 
@@ -411,12 +414,12 @@ func (m *mContractRequesterMockCallMethod) Return(r insolar.Reply, r1 error) *Co
 }
 
 //ExpectOnce specifies that invocation of ContractRequester.CallMethod is expected once
-func (m *mContractRequesterMockCallMethod) ExpectOnce(p context.Context, p1 insolar.Message) *ContractRequesterMockCallMethodExpectation {
+func (m *mContractRequesterMockCallMethod) ExpectOnce(p context.Context, p1 insolar.Message, p2 *error) *ContractRequesterMockCallMethodExpectation {
 	m.mock.CallMethodFunc = nil
 	m.mainExpectation = nil
 
 	expectation := &ContractRequesterMockCallMethodExpectation{}
-	expectation.input = &ContractRequesterMockCallMethodInput{p, p1}
+	expectation.input = &ContractRequesterMockCallMethodInput{p, p1, p2}
 	m.expectationSeries = append(m.expectationSeries, expectation)
 	return expectation
 }
@@ -426,7 +429,7 @@ func (e *ContractRequesterMockCallMethodExpectation) Return(r insolar.Reply, r1 
 }
 
 //Set uses given function f as a mock of ContractRequester.CallMethod method
-func (m *mContractRequesterMockCallMethod) Set(f func(p context.Context, p1 insolar.Message) (r insolar.Reply, r1 error)) *ContractRequesterMock {
+func (m *mContractRequesterMockCallMethod) Set(f func(p context.Context, p1 insolar.Message, p2 *error) (r insolar.Reply, r1 error)) *ContractRequesterMock {
 	m.mainExpectation = nil
 	m.expectationSeries = nil
 
@@ -435,18 +438,18 @@ func (m *mContractRequesterMockCallMethod) Set(f func(p context.Context, p1 inso
 }
 
 //CallMethod implements github.com/insolar/insolar/insolar.ContractRequester interface
-func (m *ContractRequesterMock) CallMethod(p context.Context, p1 insolar.Message) (r insolar.Reply, r1 error) {
+func (m *ContractRequesterMock) CallMethod(p context.Context, p1 insolar.Message, p2 *error) (r insolar.Reply, r1 error) {
 	counter := atomic.AddUint64(&m.CallMethodPreCounter, 1)
 	defer atomic.AddUint64(&m.CallMethodCounter, 1)
 
 	if len(m.CallMethodMock.expectationSeries) > 0 {
 		if counter > uint64(len(m.CallMethodMock.expectationSeries)) {
-			m.t.Fatalf("Unexpected call to ContractRequesterMock.CallMethod. %v %v", p, p1)
+			m.t.Fatalf("Unexpected call to ContractRequesterMock.CallMethod. %v %v %v", p, p1, p2)
 			return
 		}
 
 		input := m.CallMethodMock.expectationSeries[counter-1].input
-		testify_assert.Equal(m.t, *input, ContractRequesterMockCallMethodInput{p, p1}, "ContractRequester.CallMethod got unexpected parameters")
+		testify_assert.Equal(m.t, *input, ContractRequesterMockCallMethodInput{p, p1, p2}, "ContractRequester.CallMethod got unexpected parameters")
 
 		result := m.CallMethodMock.expectationSeries[counter-1].result
 		if result == nil {
@@ -464,7 +467,7 @@ func (m *ContractRequesterMock) CallMethod(p context.Context, p1 insolar.Message
 
 		input := m.CallMethodMock.mainExpectation.input
 		if input != nil {
-			testify_assert.Equal(m.t, *input, ContractRequesterMockCallMethodInput{p, p1}, "ContractRequester.CallMethod got unexpected parameters")
+			testify_assert.Equal(m.t, *input, ContractRequesterMockCallMethodInput{p, p1, p2}, "ContractRequester.CallMethod got unexpected parameters")
 		}
 
 		result := m.CallMethodMock.mainExpectation.result
@@ -479,11 +482,11 @@ func (m *ContractRequesterMock) CallMethod(p context.Context, p1 insolar.Message
 	}
 
 	if m.CallMethodFunc == nil {
-		m.t.Fatalf("Unexpected call to ContractRequesterMock.CallMethod. %v %v", p, p1)
+		m.t.Fatalf("Unexpected call to ContractRequesterMock.CallMethod. %v %v %v", p, p1, p2)
 		return
 	}
 
-	return m.CallMethodFunc(p, p1)
+	return m.CallMethodFunc(p, p1, p2)
 }
 
 //CallMethodMinimockCounter returns a count of ContractRequesterMock.CallMethodFunc invocations
@@ -532,6 +535,7 @@ type ContractRequesterMockSendRequestInput struct {
 	p1 *insolar.Reference
 	p2 string
 	p3 []interface{}
+	p4 *error
 }
 
 type ContractRequesterMockSendRequestResult struct {
@@ -540,14 +544,14 @@ type ContractRequesterMockSendRequestResult struct {
 }
 
 //Expect specifies that invocation of ContractRequester.SendRequest is expected from 1 to Infinity times
-func (m *mContractRequesterMockSendRequest) Expect(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}) *mContractRequesterMockSendRequest {
+func (m *mContractRequesterMockSendRequest) Expect(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 *error) *mContractRequesterMockSendRequest {
 	m.mock.SendRequestFunc = nil
 	m.expectationSeries = nil
 
 	if m.mainExpectation == nil {
 		m.mainExpectation = &ContractRequesterMockSendRequestExpectation{}
 	}
-	m.mainExpectation.input = &ContractRequesterMockSendRequestInput{p, p1, p2, p3}
+	m.mainExpectation.input = &ContractRequesterMockSendRequestInput{p, p1, p2, p3, p4}
 	return m
 }
 
@@ -564,12 +568,12 @@ func (m *mContractRequesterMockSendRequest) Return(r insolar.Reply, r1 error) *C
 }
 
 //ExpectOnce specifies that invocation of ContractRequester.SendRequest is expected once
-func (m *mContractRequesterMockSendRequest) ExpectOnce(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}) *ContractRequesterMockSendRequestExpectation {
+func (m *mContractRequesterMockSendRequest) ExpectOnce(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 *error) *ContractRequesterMockSendRequestExpectation {
 	m.mock.SendRequestFunc = nil
 	m.mainExpectation = nil
 
 	expectation := &ContractRequesterMockSendRequestExpectation{}
-	expectation.input = &ContractRequesterMockSendRequestInput{p, p1, p2, p3}
+	expectation.input = &ContractRequesterMockSendRequestInput{p, p1, p2, p3, p4}
 	m.expectationSeries = append(m.expectationSeries, expectation)
 	return expectation
 }
@@ -579,7 +583,7 @@ func (e *ContractRequesterMockSendRequestExpectation) Return(r insolar.Reply, r1
 }
 
 //Set uses given function f as a mock of ContractRequester.SendRequest method
-func (m *mContractRequesterMockSendRequest) Set(f func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}) (r insolar.Reply, r1 error)) *ContractRequesterMock {
+func (m *mContractRequesterMockSendRequest) Set(f func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 *error) (r insolar.Reply, r1 error)) *ContractRequesterMock {
 	m.mainExpectation = nil
 	m.expectationSeries = nil
 
@@ -588,18 +592,18 @@ func (m *mContractRequesterMockSendRequest) Set(f func(p context.Context, p1 *in
 }
 
 //SendRequest implements github.com/insolar/insolar/insolar.ContractRequester interface
-func (m *ContractRequesterMock) SendRequest(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}) (r insolar.Reply, r1 error) {
+func (m *ContractRequesterMock) SendRequest(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 *error) (r insolar.Reply, r1 error) {
 	counter := atomic.AddUint64(&m.SendRequestPreCounter, 1)
 	defer atomic.AddUint64(&m.SendRequestCounter, 1)
 
 	if len(m.SendRequestMock.expectationSeries) > 0 {
 		if counter > uint64(len(m.SendRequestMock.expectationSeries)) {
-			m.t.Fatalf("Unexpected call to ContractRequesterMock.SendRequest. %v %v %v %v", p, p1, p2, p3)
+			m.t.Fatalf("Unexpected call to ContractRequesterMock.SendRequest. %v %v %v %v %v", p, p1, p2, p3, p4)
 			return
 		}
 
 		input := m.SendRequestMock.expectationSeries[counter-1].input
-		testify_assert.Equal(m.t, *input, ContractRequesterMockSendRequestInput{p, p1, p2, p3}, "ContractRequester.SendRequest got unexpected parameters")
+		testify_assert.Equal(m.t, *input, ContractRequesterMockSendRequestInput{p, p1, p2, p3, p4}, "ContractRequester.SendRequest got unexpected parameters")
 
 		result := m.SendRequestMock.expectationSeries[counter-1].result
 		if result == nil {
@@ -617,7 +621,7 @@ func (m *ContractRequesterMock) SendRequest(p context.Context, p1 *insolar.Refer
 
 		input := m.SendRequestMock.mainExpectation.input
 		if input != nil {
-			testify_assert.Equal(m.t, *input, ContractRequesterMockSendRequestInput{p, p1, p2, p3}, "ContractRequester.SendRequest got unexpected parameters")
+			testify_assert.Equal(m.t, *input, ContractRequesterMockSendRequestInput{p, p1, p2, p3, p4}, "ContractRequester.SendRequest got unexpected parameters")
 		}
 
 		result := m.SendRequestMock.mainExpectation.result
@@ -632,11 +636,11 @@ func (m *ContractRequesterMock) SendRequest(p context.Context, p1 *insolar.Refer
 	}
 
 	if m.SendRequestFunc == nil {
-		m.t.Fatalf("Unexpected call to ContractRequesterMock.SendRequest. %v %v %v %v", p, p1, p2, p3)
+		m.t.Fatalf("Unexpected call to ContractRequesterMock.SendRequest. %v %v %v %v %v", p, p1, p2, p3, p4)
 		return
 	}
 
-	return m.SendRequestFunc(p, p1, p2, p3)
+	return m.SendRequestFunc(p, p1, p2, p3, p4)
 }
 
 //SendRequestMinimockCounter returns a count of ContractRequesterMock.SendRequestFunc invocations
@@ -686,6 +690,7 @@ type ContractRequesterMockSendRequestWithPulseInput struct {
 	p2 string
 	p3 []interface{}
 	p4 insolar.PulseNumber
+	p5 *error
 }
 
 type ContractRequesterMockSendRequestWithPulseResult struct {
@@ -694,14 +699,14 @@ type ContractRequesterMockSendRequestWithPulseResult struct {
 }
 
 //Expect specifies that invocation of ContractRequester.SendRequestWithPulse is expected from 1 to Infinity times
-func (m *mContractRequesterMockSendRequestWithPulse) Expect(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber) *mContractRequesterMockSendRequestWithPulse {
+func (m *mContractRequesterMockSendRequestWithPulse) Expect(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber, p5 *error) *mContractRequesterMockSendRequestWithPulse {
 	m.mock.SendRequestWithPulseFunc = nil
 	m.expectationSeries = nil
 
 	if m.mainExpectation == nil {
 		m.mainExpectation = &ContractRequesterMockSendRequestWithPulseExpectation{}
 	}
-	m.mainExpectation.input = &ContractRequesterMockSendRequestWithPulseInput{p, p1, p2, p3, p4}
+	m.mainExpectation.input = &ContractRequesterMockSendRequestWithPulseInput{p, p1, p2, p3, p4, p5}
 	return m
 }
 
@@ -718,12 +723,12 @@ func (m *mContractRequesterMockSendRequestWithPulse) Return(r insolar.Reply, r1 
 }
 
 //ExpectOnce specifies that invocation of ContractRequester.SendRequestWithPulse is expected once
-func (m *mContractRequesterMockSendRequestWithPulse) ExpectOnce(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber) *ContractRequesterMockSendRequestWithPulseExpectation {
+func (m *mContractRequesterMockSendRequestWithPulse) ExpectOnce(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber, p5 *error) *ContractRequesterMockSendRequestWithPulseExpectation {
 	m.mock.SendRequestWithPulseFunc = nil
 	m.mainExpectation = nil
 
 	expectation := &ContractRequesterMockSendRequestWithPulseExpectation{}
-	expectation.input = &ContractRequesterMockSendRequestWithPulseInput{p, p1, p2, p3, p4}
+	expectation.input = &ContractRequesterMockSendRequestWithPulseInput{p, p1, p2, p3, p4, p5}
 	m.expectationSeries = append(m.expectationSeries, expectation)
 	return expectation
 }
@@ -733,7 +738,7 @@ func (e *ContractRequesterMockSendRequestWithPulseExpectation) Return(r insolar.
 }
 
 //Set uses given function f as a mock of ContractRequester.SendRequestWithPulse method
-func (m *mContractRequesterMockSendRequestWithPulse) Set(f func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber) (r insolar.Reply, r1 error)) *ContractRequesterMock {
+func (m *mContractRequesterMockSendRequestWithPulse) Set(f func(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber, p5 *error) (r insolar.Reply, r1 error)) *ContractRequesterMock {
 	m.mainExpectation = nil
 	m.expectationSeries = nil
 
@@ -742,18 +747,18 @@ func (m *mContractRequesterMockSendRequestWithPulse) Set(f func(p context.Contex
 }
 
 //SendRequestWithPulse implements github.com/insolar/insolar/insolar.ContractRequester interface
-func (m *ContractRequesterMock) SendRequestWithPulse(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber) (r insolar.Reply, r1 error) {
+func (m *ContractRequesterMock) SendRequestWithPulse(p context.Context, p1 *insolar.Reference, p2 string, p3 []interface{}, p4 insolar.PulseNumber, p5 *error) (r insolar.Reply, r1 error) {
 	counter := atomic.AddUint64(&m.SendRequestWithPulsePreCounter, 1)
 	defer atomic.AddUint64(&m.SendRequestWithPulseCounter, 1)
 
 	if len(m.SendRequestWithPulseMock.expectationSeries) > 0 {
 		if counter > uint64(len(m.SendRequestWithPulseMock.expectationSeries)) {
-			m.t.Fatalf("Unexpected call to ContractRequesterMock.SendRequestWithPulse. %v %v %v %v %v", p, p1, p2, p3, p4)
+			m.t.Fatalf("Unexpected call to ContractRequesterMock.SendRequestWithPulse. %v %v %v %v %v %v", p, p1, p2, p3, p4, p5)
 			return
 		}
 
 		input := m.SendRequestWithPulseMock.expectationSeries[counter-1].input
-		testify_assert.Equal(m.t, *input, ContractRequesterMockSendRequestWithPulseInput{p, p1, p2, p3, p4}, "ContractRequester.SendRequestWithPulse got unexpected parameters")
+		testify_assert.Equal(m.t, *input, ContractRequesterMockSendRequestWithPulseInput{p, p1, p2, p3, p4, p5}, "ContractRequester.SendRequestWithPulse got unexpected parameters")
 
 		result := m.SendRequestWithPulseMock.expectationSeries[counter-1].result
 		if result == nil {
@@ -771,7 +776,7 @@ func (m *ContractRequesterMock) SendRequestWithPulse(p context.Context, p1 *inso
 
 		input := m.SendRequestWithPulseMock.mainExpectation.input
 		if input != nil {
-			testify_assert.Equal(m.t, *input, ContractRequesterMockSendRequestWithPulseInput{p, p1, p2, p3, p4}, "ContractRequester.SendRequestWithPulse got unexpected parameters")
+			testify_assert.Equal(m.t, *input, ContractRequesterMockSendRequestWithPulseInput{p, p1, p2, p3, p4, p5}, "ContractRequester.SendRequestWithPulse got unexpected parameters")
 		}
 
 		result := m.SendRequestWithPulseMock.mainExpectation.result
@@ -786,11 +791,11 @@ func (m *ContractRequesterMock) SendRequestWithPulse(p context.Context, p1 *inso
 	}
 
 	if m.SendRequestWithPulseFunc == nil {
-		m.t.Fatalf("Unexpected call to ContractRequesterMock.SendRequestWithPulse. %v %v %v %v %v", p, p1, p2, p3, p4)
+		m.t.Fatalf("Unexpected call to ContractRequesterMock.SendRequestWithPulse. %v %v %v %v %v %v", p, p1, p2, p3, p4, p5)
 		return
 	}
 
-	return m.SendRequestWithPulseFunc(p, p1, p2, p3, p4)
+	return m.SendRequestWithPulseFunc(p, p1, p2, p3, p4, p5)
 }
 
 //SendRequestWithPulseMinimockCounter returns a count of ContractRequesterMock.SendRequestWithPulseFunc invocations

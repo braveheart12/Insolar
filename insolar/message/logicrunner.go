@@ -36,6 +36,7 @@ type ReturnResults struct {
 	RequestRef insolar.Reference
 	Reply      insolar.Reply
 	Error      string
+	// TODO AALEKSEEV add SystemError
 }
 
 func (rr *ReturnResults) Type() insolar.MessageType {

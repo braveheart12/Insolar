@@ -146,7 +146,8 @@ func (s *ContractService) CallConstructor(r *http.Request, args *CallConstructor
 		},
 	}
 
-	callConstructorReply, err := s.runner.ContractRequester.CallConstructor(ctx, msg)
+	var systemError error // TODO AALEKSEEV
+	callConstructorReply, err := s.runner.ContractRequester.CallConstructor(ctx, msg, &systemError)
 	if err != nil {
 		return errors.Wrap(err, "CallConstructor error")
 	}
@@ -203,7 +204,8 @@ func (s *ContractService) CallMethod(r *http.Request, args *CallMethodArgs, re *
 		},
 	}
 
-	callMethodReply, err := s.runner.ContractRequester.Call(ctx, msg)
+	var systemError error // AALEKSEEV TODO
+	callMethodReply, err := s.runner.ContractRequester.Call(ctx, msg, &systemError)
 	if err != nil {
 		inslogger.FromContext(ctx).Error("failed to call: ", err.Error())
 		return errors.Wrap(err, "CallMethod failed with error")

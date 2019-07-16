@@ -845,7 +845,7 @@ func (suite *LogicRunnerTestSuite) TestSagaCallAcceptNotificationHandler() {
 	var usedReturnMode record.ReturnMode
 
 	cr := testutils.NewContractRequesterMock(suite.T())
-	cr.CallMethodFunc = func(ctx context.Context, msg insolar.Message) (insolar.Reply, error) {
+	cr.CallMethodFunc = func(ctx context.Context, msg insolar.Message, se *error) (insolar.Reply, error) {
 		suite.Require().Equal(insolar.TypeCallMethod, msg.Type())
 		cm := msg.(*message.CallMethod)
 		usedCaller = cm.Caller

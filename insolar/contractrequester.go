@@ -24,10 +24,10 @@ import (
 
 // ContractRequester is the global contract requester handler. Other system parts communicate with contract requester through it.
 type ContractRequester interface {
-	Call(ctx context.Context, msg Message) (Reply, error)
-	SendRequest(ctx context.Context, ref *Reference, method string, argsIn []interface{}) (Reply, error)
-	SendRequestWithPulse(ctx context.Context, ref *Reference, method string, argsIn []interface{}, pulse PulseNumber) (Reply, error)
+	Call(ctx context.Context, msg Message, systemError *error) (Reply, error)
+	SendRequest(ctx context.Context, ref *Reference, method string, argsIn []interface{}, systemError *error) (Reply, error)
+	SendRequestWithPulse(ctx context.Context, ref *Reference, method string, argsIn []interface{}, pulse PulseNumber, systemError *error) (Reply, error)
 	// CallMethod - low level calls contract
-	CallMethod(ctx context.Context, msg Message) (Reply, error)
-	CallConstructor(ctx context.Context, msg Message) (*Reference, error)
+	CallMethod(ctx context.Context, msg Message, systemError *error) (Reply, error)
+	CallConstructor(ctx context.Context, msg Message, systemError *error) (*Reference, error)
 }

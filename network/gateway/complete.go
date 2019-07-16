@@ -165,7 +165,8 @@ func (g *Complete) requestCertSign(ctx context.Context, discoveryNode insolar.Di
 }
 
 func (g *Complete) getNodeInfo(ctx context.Context, nodeRef *insolar.Reference) (string, string, error) {
-	res, err := g.ContractRequester.SendRequest(ctx, nodeRef, "GetNodeInfo", []interface{}{})
+	var systemError error
+	res, err := g.ContractRequester.SendRequest(ctx, nodeRef, "GetNodeInfo", []interface{}{}, &systemError)
 	if err != nil {
 		return "", "", errors.Wrap(err, "[ GetCert ] Couldn't call GetNodeInfo")
 	}

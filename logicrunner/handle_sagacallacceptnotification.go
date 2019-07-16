@@ -54,7 +54,8 @@ func (h *HandleSagaCallAcceptNotification) Present(ctx context.Context, f flow.F
 	// Make a call to the second VE.
 	callMsg := &message.CallMethod{IncomingRequest: incoming}
 	cr := h.dep.lr.ContractRequester
-	res, err := cr.CallMethod(ctx, callMsg)
+	var systemError error // AALEKSEEV TODO + see current saga register result for outgoing requests implementation
+	res, err := cr.CallMethod(ctx, callMsg, &systemError)
 	if err != nil {
 		return err
 	}

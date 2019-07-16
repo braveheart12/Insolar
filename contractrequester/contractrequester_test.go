@@ -139,7 +139,7 @@ func TestContractRequester_SendRequest(t *testing.T) {
 					require.NoError(t, err)
 					requestRef := insolar.NewReference(*insolar.NewID(insolar.FirstPulseNumber, hash[:]))
 
-					resultSender := func () {
+					resultSender := func() {
 						res := test.resultMessage
 						res.RequestRef = *requestRef
 						cReq.result(ctx, &res)
@@ -156,7 +156,8 @@ func TestContractRequester_SendRequest(t *testing.T) {
 					return &reply.RegisterRequest{Request: *requestRef}, nil
 				})
 
-			result, err := cReq.SendRequest(ctx, &ref, "TestMethod", []interface{}{})
+			var systemError error
+			result, err := cReq.SendRequest(ctx, &ref, "TestMethod", []interface{}{}, &systemError)
 			require.NoError(t, err)
 			require.Equal(t, &reply.CallMethod{}, result)
 		})
@@ -171,7 +172,7 @@ func TestContractRequester_CallMethod_Timeout(t *testing.T) {
 	cr, err := New()
 	require.NoError(t, err)
 
-	cr.callTimeout = 1*time.Nanosecond
+	cr.callTimeout = 1 * time.Nanosecond
 
 	cr.PlatformCryptographyScheme = testutils.NewPlatformCryptographyScheme()
 
@@ -203,7 +204,8 @@ func TestContractRequester_CallMethod_Timeout(t *testing.T) {
 		},
 	}
 
-	_, err = cr.CallMethod(ctx, msg)
+	var systemError error
+	_, err = cr.CallMethod(ctx, msg, &systemError)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "canceled")
 	require.Contains(t, err.Error(), "timeout")

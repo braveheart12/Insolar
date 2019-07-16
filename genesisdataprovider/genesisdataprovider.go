@@ -44,7 +44,8 @@ func New() (*GenesisDataProvider, error) {
 }
 
 func (gdp *GenesisDataProvider) setInfo(ctx context.Context) error {
-	routResult, err := gdp.ContractRequester.SendRequest(ctx, gdp.GetRootDomain(ctx), "Info", []interface{}{})
+	var systemError error
+	routResult, err := gdp.ContractRequester.SendRequest(ctx, gdp.GetRootDomain(ctx), "Info", []interface{}{}, &systemError)
 	if err != nil {
 		return errors.Wrap(err, "[ setInfo ] Can't send request")
 	}
